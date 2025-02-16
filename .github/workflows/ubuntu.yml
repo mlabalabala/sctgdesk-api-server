@@ -1,7 +1,7 @@
 name: Build for aarch64 Ubuntu 22.04 
 
 on:
-  workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main

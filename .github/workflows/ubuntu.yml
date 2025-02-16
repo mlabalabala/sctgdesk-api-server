@@ -1,11 +1,10 @@
-name: Build for aarch64 Ubuntu 22.04 
-
+name: Build for Ubuntu 22.04
 on:
   workflow_call:
   push:
     branches:
       - main
-
+      
 permissions:
   contents: write
   pages: write
@@ -16,11 +15,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target: [ "aarch64-unknown-linux-musl" ]
     env:
-      TARGET: ${{ matrix.target }}
+      TARGET: aarch64-unknown-linux-musl
 
     steps:
     - name: Checkout code
@@ -41,48 +37,47 @@ jobs:
         echo "CXX_aarch64_unknown_linux_musl=aarch64-linux-musl-g++" >> $GITHUB_ENV
 
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: crusty-pie/toolchain@main
       with:
         profile: minimal
         toolchain: stable
         override: true
-        target: ${{ matrix.target }}
+        targets: ${{env.TARGET}}
 
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
-        path: ~/.cargo/registry
-        key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ matrix.target }}
-
+            path: ~/.cargo/registry
+            key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
     - name: Cache cargo index
       uses: actions/cache@v4
       with:
-        path: ~/.cargo/git
-        key: ubuntu-cargo-git-${{ hashFiles('**/Cargo.lock') }}-${{ matrix.target }}
+            path: ~/.cargo/git
+            key: ubuntu-cargo-git-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Cache cargo build
       uses: actions/cache@v4
       with:
-        path: target
-        key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}-${{ matrix.target }}
+            path: target
+            key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+          node-version: '20'
 
     - name: Build project
       run: |
-        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --target=${{ matrix.target }} --release
-        cd target/${{ matrix.target }}/release
-        zip -r /tmp/ubuntu_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --target=${{env.TARGET}} --release
+        cd target/${{env.TARGET}}/release
+        zip -r /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip sctgdesk-api-server
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ubuntu_${{ matrix.target }}
+        name: ubuntu_amd64
         path: |
-          target/${{ matrix.target }}/release/sctgdesk-api-server
+          target/${{env.TARGET}}/release/sctgdesk-api-server
             
     #- name: Create Release with gh
     #  env:
